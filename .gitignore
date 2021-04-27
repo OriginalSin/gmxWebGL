@@ -18,5 +18,4 @@ bin-release/
 # information for Eclipse / Flash Builder.
 
 node_modules
-dist/gmxWebGL.*
 package-loc.*

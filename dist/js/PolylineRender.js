@@ -310,9 +310,9 @@ PolylineRender.prototype = {
 				if (geo.type === 'MULTYPOLYGON') {
 					coords = coords[0][0];
 				}
-				var arr = coords[0];
+				// var arr = coords[0];
 				// console.log("_createBuffers5", arr);
-				appendLineData(arr, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
+				appendLineData(coords, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
 			} else {
 				if (geo.type === 'POLYGON') {
 				// if (geo.type === 'MULTYPOLYGON') {
@@ -321,9 +321,9 @@ PolylineRender.prototype = {
 				}
 				var arr = coords[0];
 				coords.forEach(arr => {
-					arr.forEach(arr1 => {
-						appendLineData(arr1, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
-					});
+					// arr.forEach(arr1 => {
+						appendLineData(arr, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
+					// });
 				});
 			}
 		}

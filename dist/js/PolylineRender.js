@@ -128,11 +128,11 @@ PolylineRender.prototype = {
 
 			this._framebuffer.init();
 
-			this._handler.addProgram(new gmxWebGL.Program("billboard", {
+			this._handler.addProgram(new gmxWebGL.Program("billboard1", {
 				uniforms: {
 					'viewport': { type: 'vec2' },
 					'thicknessOutline': { type: 'FLOAT' },
-					'alpha': { type: 'FLOAT' },
+					// 'alpha': { type: 'FLOAT' },
 					'extentParams': { type: 'vec4' },
 					// 'color': { type: 'vec4' },
 					'thickness': { type: 'FLOAT' }
@@ -207,14 +207,14 @@ PolylineRender.prototype = {
 							gl_Position = vec4(m.x, m.y, 0.0, 1.0);
 						}`,
 				fragmentShader: `precision highp float;
-						uniform float alpha;
 						void main() {
-							gl_FragColor = vec4(1, 0, 0, alpha * 0.5);
+							gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 						}`
 			}));
 		}
 	},
 /*
+						uniform float alpha;
 						uniform vec4 color;
 							gl_FragColor = vec4(color.rgb, alpha * color.a);
 	_createBuffers1___: function (tileData, layerName) {
@@ -293,37 +293,43 @@ PolylineRender.prototype = {
 		var maxX = tileData.topLeft.bounds.max.x,
 			minX = tileData.topLeft.bounds.min.x;
 
-    this._lineVerticesMerc = [];
-    this._lineOrders = [];
-    this._lineIndexes = [];
+		this._lineVerticesMerc = [];
+		this._lineOrders = [];
+		this._lineIndexes = [];
 
-		for (var i = 0; i < length; i++) {
+		for (var i = 0; i < geoItems.length; i++) {
 
-			var prop = geoItems[i].properties,
-				nm = geoItems[i].item.currentFilter;
+			var prop = geoItems[i].properties;
+				// nm = geoItems[i].item.currentFilter;
+			// if (prop[1] !== "Солнечногорский район") {
+				// continue;
+			// }
 			var geo = prop[LL];
 			var coords = geo.coordinates;
-			// if (geo.type === 'POLYGON') {
-				// coords = [coords];
-			// }
-			coords.forEach(arr => {
-				// let data = gmxWebGL.flatten(arr);
-				
-				// let dataIndexes = gmxWebGL.earcut(data.vertices, data.holes, 2);
-				// for (let j = 0; j < dataIndexes.length; j++) {
-					// this._polyIndexes.push(dataIndexes[j] + this._polyVerticesMerc.length * 0.5);
-				// }
-
-				// this._polyVerticesMerc = this._polyVerticesMerc.concat(data.vertices);
-				// this._polyIndexes = this._polyIndexes.concat(indexes);
-            appendLineData([arr], true, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
-			});
+			if (location.search) {
+				if (geo.type === 'MULTYPOLYGON') {
+					coords = coords[0][0];
+				}
+				var arr = coords[0];
+				// console.log("_createBuffers5", arr);
+				appendLineData(arr, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
+			} else {
+				if (geo.type === 'POLYGON') {
+				// if (geo.type === 'MULTYPOLYGON') {
+					coords = [coords];
+					// coords = coords[0][0];
+				}
+				var arr = coords[0];
+				coords.forEach(arr => {
+					arr.forEach(arr1 => {
+						appendLineData(arr1, false, this._lineVerticesMerc, this._lineOrders, this._lineIndexes);
+					});
+				});
+			}
 		}
-		// this._polyVerticesBufferMerc = h.createArrayBuffer(new Float32Array(this._polyVerticesMerc), 2, this._polyVerticesMerc.length / 2);
-		// this._polyIndexesBuffer = h.createElementArrayBuffer(new Uint32Array(this._polyIndexes), 1, this._polyIndexes.length);
-    this._lineVerticesBufferMerc = h.createArrayBuffer(new Float32Array(this._lineVerticesMerc), 2, this._lineVerticesMerc.length / 2);
-    this._lineIndexesBuffer = h.createElementArrayBuffer(new Uint32Array(this._lineIndexes), 1, this._lineIndexes.length);
-    this._lineOrdersBuffer = h.createArrayBuffer(new Float32Array(this._lineOrders), 1, this._lineOrders.length / 2);
+		this._lineVerticesBufferMerc = h.createArrayBuffer(new Float32Array(this._lineVerticesMerc), 2, this._lineVerticesMerc.length / 2);
+		this._lineIndexesBuffer = h.createElementArrayBuffer(new Uint32Array(this._lineIndexes), 1, this._lineIndexes.length);
+		this._lineOrdersBuffer = h.createArrayBuffer(new Float32Array(this._lineOrders), 1, this._lineOrders.length / 2);
 
 		// console.timeEnd("_createBuffers5");
 	},
@@ -335,8 +341,8 @@ PolylineRender.prototype = {
 		var h = this._handler,
 			gl = h.gl;
 
-		h.programs.billboard.activate();
-		var sh = h.programs.billboard._program;
+		h.programs.billboard1.activate();
+		var sh = h.programs.billboard1._program;
 		var sha = sh.attributes,
 			shu = sh.uniforms;
 
@@ -354,7 +360,11 @@ PolylineRender.prototype = {
 
 		var b = tileData.topLeft.bounds;
 
-		gl.uniform4fv(shu.extentParams, new Float32Array([b.min.x, b.min.y, 2.0 / (b.max.x - b.min.x), 2.0 / (b.max.y - b.min.y)]));
+		var width = b.max.x - b.min.x;
+		var height = b.max.y - b.min.y;
+		gl.uniform2fv(shu.viewport, [width, height]);
+		var extentParams = new Float32Array([b.min.x, b.min.y, 2.0 / width, 2.0 / height]);
+		gl.uniform4fv(shu.extentParams, extentParams);
 
 
                         //vertex
@@ -394,7 +404,7 @@ PolylineRender.prototype = {
                         gl.drawElements(gl.TRIANGLE_STRIP, this._lineIndexesBuffer.numItems, gl.UNSIGNED_INT, 0);
                         //
                         //Aliased pass
-                        gl.uniform1f(shu.thicknessOutline, 1);
+                        gl.uniform1f(shu.thicknessOutline, 1000);
                         gl.uniform1f(shu.alpha, 1.0);
                         gl.drawElements(gl.TRIANGLE_STRIP, this._lineIndexesBuffer.numItems, gl.UNSIGNED_INT, 0);
 
@@ -490,8 +500,11 @@ var appendLineData = function (pathArr, isClosed, outVertices, outOrders, outInd
         if (isClosed) {
             last = path[path.length - 1];
         } else {
-            let p0 = path[0],
-                p1 = path[1];
+            let p0 = path[0];
+            let p1 = path[1];
+			if (!p1) {
+				p1 = p0;
+			}
             last = [p0[0] + p0[0] - p1[0], p0[1] + p0[1] - p1[1]];
         }
         outVertices.push(last[0], last[1], last[0], last[1], last[0], last[1], last[0], last[1]);
@@ -511,6 +524,9 @@ var appendLineData = function (pathArr, isClosed, outVertices, outOrders, outInd
         } else {
             let p0 = path[path.length - 1],
                 p1 = path[path.length - 2];
+			if (!p1) {
+				p1 = p0;
+			}
             first = [p0[0] + p0[0] - p1[0], p0[1] + p0[1] - p1[1]];
             outIndexes.push(index - 1, index - 1, index - 1, index - 1);
         }

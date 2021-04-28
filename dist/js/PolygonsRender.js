@@ -145,14 +145,26 @@ PolygonsRender.prototype = {
 
 			var prop = geoItems[i].properties,
 				nm = geoItems[i].item.currentFilter;
-			var coords = prop[LL].coordinates;
-			
-			let data = gmxWebGL.flatten(coords);
-				data.holes = [];
-			let indexes = gmxWebGL.earcut(data.vertices, data.holes, 2);
+			var geo = prop[LL];
+			var coords = geo.coordinates;
+			if (geo.type === 'POLYGON') {
+				coords = [coords];
+			}
+			coords.forEach(arr => {
+				let data = gmxWebGL.flatten(arr);
+				
+					// data.holes = [];
+				if (data.holes.length) {
+					console.log("holes", data);
+				}
+				let dataIndexes = gmxWebGL.earcut(data.vertices, data.holes, 2);
+				for (let j = 0; j < dataIndexes.length; j++) {
+					this._polyIndexes.push(dataIndexes[j] + this._polyVerticesMerc.length * 0.5);
+				}
 
-			this._polyVerticesMerc = this._polyVerticesMerc.concat(data.vertices);
-			this._polyIndexes = this._polyIndexes.concat(indexes);
+				this._polyVerticesMerc = this._polyVerticesMerc.concat(data.vertices);
+				// this._polyIndexes = this._polyIndexes.concat(indexes);
+			});
 		}
 		this._polyVerticesBufferMerc = h.createArrayBuffer(new Float32Array(this._polyVerticesMerc), 2, this._polyVerticesMerc.length / 2);
 		this._polyIndexesBuffer = h.createElementArrayBuffer(new Uint32Array(this._polyIndexes), 1, this._polyIndexes.length);

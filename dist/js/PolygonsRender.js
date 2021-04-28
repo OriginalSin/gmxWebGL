@@ -99,7 +99,7 @@ PolygonsRender.prototype = {
 						  }`,
 				fragmentShader: `precision highp float;
 							void main () {  
-								gl_FragColor = vec4(1, 0, 0, 1); 
+								gl_FragColor = vec4(1, 0, 0, 0.5); 
 							}`
 			}));
 		}
@@ -112,28 +112,10 @@ PolygonsRender.prototype = {
 
 		var geoItems = tileData.geoItems,
 			length = geoItems.length;
-/*
 
-		gl.deleteBuffer(this._a_vert_tex_buffer);
-		gl.deleteBuffer(this._a_lonlat_rotation_buffer);
-		gl.deleteBuffer(this._a_size_offset_buffer);
-
-		this._a_vert_tex_bufferArr = new Float32Array(length * 24);
-		this._a_size_offset_bufferArr = new Float32Array(length * 24);
-		this._a_lonlat_rotation_bufferArr = new Float32Array(length * 18);
-
-		var v = this._a_vert_tex_bufferArr,
-			c = this._a_lonlat_rotation_bufferArr,
-			s = this._a_size_offset_bufferArr;
-
-		var dx = 0.0, dy = 0.0;
-*/
 		var	LL = geoItems[0].properties.length - 1;
 
-		// var vti = this._vesselTypeImage;
-		// var ta = this._textureAtlas;
-
-		// console.time("_createBuffers");
+		console.time("_createBuffers");
 
 		var maxX = tileData.topLeft.bounds.max.x,
 			minX = tileData.topLeft.bounds.min.x;
@@ -153,10 +135,6 @@ PolygonsRender.prototype = {
 			coords.forEach(arr => {
 				let data = gmxWebGL.flatten(arr);
 				
-					// data.holes = [];
-				if (data.holes.length) {
-					console.log("holes", data);
-				}
 				let dataIndexes = gmxWebGL.earcut(data.vertices, data.holes, 2);
 				for (let j = 0; j < dataIndexes.length; j++) {
 					this._polyIndexes.push(dataIndexes[j] + this._polyVerticesMerc.length * 0.5);
@@ -169,7 +147,7 @@ PolygonsRender.prototype = {
 		this._polyVerticesBufferMerc = h.createArrayBuffer(new Float32Array(this._polyVerticesMerc), 2, this._polyVerticesMerc.length / 2);
 		this._polyIndexesBuffer = h.createElementArrayBuffer(new Uint32Array(this._polyIndexes), 1, this._polyIndexes.length);
 
-		// console.timeEnd("_createBuffers");
+		console.timeEnd("_createBuffers");
 	},
 
 	render: function (outData, tileData, layer) {
@@ -218,4 +196,54 @@ console.log('numItems:', this._polyIndexesBuffer.numItems);
 
 		return this._framebuffer.readAllPixels(outData);
 	}
+};
+var appendLineData = function (pathArr, isClosed, outVertices, outOrders, outIndexes) {
+    var index = 0;
+
+    if (outIndexes.length > 0) {
+        index = outIndexes[outIndexes.length - 5] + 9;
+        outIndexes.push(index, index);
+    } else {
+        outIndexes.push(0, 0);
+    }
+
+    for (var j = 0; j < pathArr.length; j++) {
+        var path = pathArr[j];
+        var startIndex = index;
+        var last;
+        if (isClosed) {
+            last = path[path.length - 1];
+        } else {
+            let p0 = path[0],
+                p1 = path[1];
+            last = [p0[0] + p0[0] - p1[0], p0[1] + p0[1] - p1[1]];
+        }
+        outVertices.push(last[0], last[1], last[0], last[1], last[0], last[1], last[0], last[1]);
+        outOrders.push(1, -1, 2, -2);
+
+        for (var i = 0; i < path.length; i++) {
+            var cur = path[i];
+            outVertices.push(cur[0], cur[1], cur[0], cur[1], cur[0], cur[1], cur[0], cur[1]);
+            outOrders.push(1, -1, 2, -2);
+            outIndexes.push(index++, index++, index++, index++);
+        }
+
+        var first;
+        if (isClosed) {
+            first = path[0];
+            outIndexes.push(startIndex, startIndex + 1, startIndex + 1, startIndex + 1);
+        } else {
+            let p0 = path[path.length - 1],
+                p1 = path[path.length - 2];
+            first = [p0[0] + p0[0] - p1[0], p0[1] + p0[1] - p1[1]];
+            outIndexes.push(index - 1, index - 1, index - 1, index - 1);
+        }
+        outVertices.push(first[0], first[1], first[0], first[1], first[0], first[1], first[0], first[1]);
+        outOrders.push(1, -1, 2, -2);
+
+        if (j < pathArr.length - 1) {
+            index += 8;
+            outIndexes.push(index, index);
+        }
+    }
 };

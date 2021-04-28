@@ -134,7 +134,7 @@ PolylineRender.prototype = {
 					'thicknessOutline': { type: 'FLOAT' },
 					// 'alpha': { type: 'FLOAT' },
 					'extentParams': { type: 'vec4' },
-					// 'color': { type: 'vec4' },
+					'color': { type: 'vec4' },
 					'thickness': { type: 'FLOAT' }
 				},
 				attributes: {
@@ -207,8 +207,9 @@ PolylineRender.prototype = {
 							gl_Position = vec4(m.x, m.y, 0.0, 1.0);
 						}`,
 				fragmentShader: `precision highp float;
+						uniform vec4 color;
 						void main() {
-							gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+							gl_FragColor = vec4(color.rgb, color.a);
 						}`
 			}));
 		}
@@ -217,6 +218,7 @@ PolylineRender.prototype = {
 						uniform float alpha;
 						uniform vec4 color;
 							gl_FragColor = vec4(color.rgb, alpha * color.a);
+							gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 	_createBuffers1___: function (tileData, layerName) {
 
 		var h = this._handler,
@@ -363,6 +365,7 @@ PolylineRender.prototype = {
 		var width = b.max.x - b.min.x;
 		var height = b.max.y - b.min.y;
 		gl.uniform2fv(shu.viewport, [width, height]);
+		// gl.uniform2fv(shu.viewport, [1, 1]);
 		var extentParams = new Float32Array([b.min.x, b.min.y, 2.0 / width, 2.0 / height]);
 		gl.uniform4fv(shu.extentParams, extentParams);
 
@@ -383,7 +386,7 @@ PolylineRender.prototype = {
                         //PASS - stroke
                         gl.uniform1f(shu.thickness, 2);
                         // gl.uniform4fv(shu.color, style.strokeColor.toArray());
-                        // gl.uniform4fv(shu.color, [255, 0, 0, 1]);
+                        gl.uniform4fv(shu.color, [255, 0, 0, 1]);
 
                         //Antialias pass
                         gl.uniform1f(shu.thicknessOutline, 2);
@@ -396,7 +399,7 @@ PolylineRender.prototype = {
 
                         //PASS - inside line
                         gl.uniform1f(shu.thickness, 4);
-                        // gl.uniform4fv(shu.color, [0, 255, 0, 1]);
+                        gl.uniform4fv(shu.color, [0, 255, 0, 1]);
 
                         //Antialias pass
                         gl.uniform1f(shu.thicknessOutline, 2);

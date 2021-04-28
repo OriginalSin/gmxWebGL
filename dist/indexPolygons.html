@@ -14,7 +14,7 @@
 
 <body>
 	<div id="map"></div>
-    <script src="./js/PolylineRender.js"></script>
+    <script src="./js/PolygonsRender.js"></script>
 
 <script>
 var mapNode = document.getElementById('map');
@@ -34,11 +34,10 @@ if (!L) {
 		}).addTo(map)
 	}).addTo(map);
 
-	// L.gmx.loadLayer('G1XRF', '2BCAF1B09BF94223B05428797403C54A', {}
 	L.gmx.loadLayer('G1XRF', '8D44B9821BD8461DA39CA65FBB4FD14C', {}
 	).then(function(gmxLayer) {
 		// console.log('xxxxx', it);
-		var tileRender = new PolylineRender();
+		var tileRender = new PolygonsRender();
 		tileRender.initialize();
 
 		if (tileRender.isReady()) {
@@ -50,6 +49,7 @@ if (!L) {
 				var tile = info.tile,
 					context = info.ctx;
 				if (context) {
+console.log('tile:', info.topLeft.tilePoint);
 					tileRender.render(_data, info, gmxLayer);
 					var imageData = context.createImageData(tile.width, tile.height);
 					imageData.data.set(_data);
@@ -57,7 +57,7 @@ if (!L) {
 				}
 			};
 		}
-		tileRender.appendStyles_old(gmxLayer.getStyles(), gmxLayer);
+		//tileRender.appendStyles_old(gmxLayer.getStyles(), gmxLayer);
 
 	});
 }

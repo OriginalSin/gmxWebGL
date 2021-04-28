@@ -1,4 +1,4 @@
-var PolylineRender = function (params) {
+var PolygonsRender = function (params) {
 
 	params = params || {};
 
@@ -14,7 +14,7 @@ var PolylineRender = function (params) {
 	this._ready = false;
 };
 
-PolylineRender.prototype = {
+PolygonsRender.prototype = {
 
 	//appendStyles: function (arr) {
 	//    var ta = this._textureAtlas;
@@ -36,64 +36,6 @@ PolylineRender.prototype = {
 	//    });
 	//},
 
-	clearTextureAtlas: function() {
-		if (this._textureAtlas) {
-			this._textureAtlas.clear();
-		}
-	},
-
-	appendStyles_old: function (styles, layer) {
-
-		var ta = this._textureAtlas;
-
-		var _this = this;
-
-		for (var i = 0; i < styles.length; i++) {
-
-			var si = styles[i];
-
-			(function (style, index) {
-
-				var f = style.Filter,
-					t;
-				//if (!f) {
-				//    t = "unknown";
-				//} else {
-				//    t = f.split('=')[1].trim();
-				//    t = t.substr(1, t.length - 2);
-				//}
-
-				var src = style.RenderStyle.iconUrl;
-
-				var img = new Image();
-				img.crossOrigin = '';
-
-				img.onload = function () {
-
-					var canvas = document.createElement('canvas');
-					canvas.width = this.width;
-					canvas.height = this.height;
-					canvas.getContext("2d").drawImage(img, 0, 0, this.width, this.height);
-
-					var layerName = layer.options.layerID;
-
-					ta.loadImage(canvas.toDataURL(), function (img) {
-						if (!_this._vesselTypeImage[layerName]) {
-							_this._vesselTypeImage[layerName] = [];
-						}
-						_this._vesselTypeImage[layerName][index] = img;
-						ta.addImage(img);
-						ta.createTexture();
-					});
-				};
-
-				img.src = src;
-
-			})(si, i);
-
-		}
-	},
-
 	isReady: function() {
 		return this._ready;
 	},
@@ -112,8 +54,8 @@ PolylineRender.prototype = {
 
 		if (this._handler.gl) {
 
-			this._textureAtlas = new gmxWebGL.TextureAtlas(1024, 1024);
-			this._textureAtlas.assignHandler(this._handler);
+			// this._textureAtlas = new gmxWebGL.TextureAtlas(1024, 1024);
+			// this._textureAtlas.assignHandler(this._handler);
 
 			this._ready = true;
 			this._handler.deactivateFaceCulling();
@@ -168,12 +110,13 @@ PolylineRender.prototype = {
 		var h = this._handler,
 			gl = h.gl;
 
+		var geoItems = tileData.geoItems,
+			length = geoItems.length;
+/*
+
 		gl.deleteBuffer(this._a_vert_tex_buffer);
 		gl.deleteBuffer(this._a_lonlat_rotation_buffer);
 		gl.deleteBuffer(this._a_size_offset_buffer);
-
-		var geoItems = tileData.geoItems,
-			length = geoItems.length;
 
 		this._a_vert_tex_bufferArr = new Float32Array(length * 24);
 		this._a_size_offset_bufferArr = new Float32Array(length * 24);
@@ -184,13 +127,11 @@ PolylineRender.prototype = {
 			s = this._a_size_offset_bufferArr;
 
 		var dx = 0.0, dy = 0.0;
+*/
+		var	LL = geoItems[0].properties.length - 1;
 
-		var VT = 5,
-			LL = geoItems[0].properties.length - 1,
-			ROT = 1;
-
-		var vti = this._vesselTypeImage;
-		var ta = this._textureAtlas;
+		// var vti = this._vesselTypeImage;
+		// var ta = this._textureAtlas;
 
 		// console.time("_createBuffers");
 
